@@ -1,0 +1,50 @@
+version: "3"
+
+networks:
+  loki-net:
+
+volumes:
+  grafana_data: {}
+
+services:
+  loki:
+    user: $UIG:$GID
+    image: grafana/loki:latest
+    container_name: "LOKI-DOCKER"
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./loki:/etc/loki   
+    networks:
+      - loki-net
+
+  promtail:
+    image: grafana/promtail:2.2.1
+    container_name: "PROMTAIL-DOCKER"
+    volumes:
+      - /var/log:/var/log
+      - ./mylogs/:/var/log/mylogs
+      - ./promtail:/etc/promtail 
+    command: -config.file=/etc/promtail/loki-promtail-conf.yml
+    networks:
+      - loki-net
+
+  grafana:
+    user: $UIG:$GID
+    image: grafana/grafana:latest
+    container_name: "GRAFANA-DOCKER"
+    environment:
+      - GF_EXPLORE_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_SECURITY_ADMIN_USER=${ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    restart: always    
+    ports:
+      - "3000:3000"
+    networks:
+      - loki-net
