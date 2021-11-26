@@ -5,6 +5,7 @@ networks:
 
 volumes:
   grafana_data: {}
+  loki_data: {}
 
 services:
   loki:
@@ -59,7 +60,8 @@ services:
     command: logstash -f /etc/logstash/conf.d/logstash.conf
     volumes:
       - ./logstash/logstash.conf:/etc/logstash/conf.d/logstash.conf:ro
-      - ./mylogs/:/var/log/mylogs    
+      - ./mylogs/:/var/log/mylogs
+      - ./logstash_data:/logstash    
     networks:
       - loki-net
     depends_on:
