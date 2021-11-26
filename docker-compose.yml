@@ -15,20 +15,21 @@ services:
       - "3100:3100"
     command: -config.file=/etc/loki/local-config.yaml
     volumes:
-      - ./loki:/etc/loki   
+      - ./loki:/etc/loki
+      - ./loki_data:/loki
     networks:
       - loki-net
 
-  promtail:
-    image: grafana/promtail:2.2.1
-    container_name: "PROMTAIL-DOCKER"
-    volumes:
-      - /var/log:/var/log
-      - ./mylogs/:/var/log/mylogs
-      - ./promtail:/etc/promtail 
-    command: -config.file=/etc/promtail/loki-promtail-conf.yml
-    networks:
-      - loki-net
+  # promtail:
+  #   image: grafana/promtail:2.2.1
+  #   container_name: "PROMTAIL-DOCKER"
+  #   volumes:
+  #     - /var/log:/var/log
+  #     - ./mylogs/:/var/log/mylogs
+  #     - ./promtail:/etc/promtail 
+  #   command: -config.file=/etc/promtail/loki-promtail-conf.yml
+  #   networks:
+  #     - loki-net
 
   grafana:
     user: $UIG:$GID
@@ -48,3 +49,18 @@ services:
       - "3000:3000"
     networks:
       - loki-net
+
+  logstash:
+    user: $UIG:$GID
+    image: grafana/logstash-output-loki
+    container_name: "LOGSTASH-DOCKER"
+    environment:
+      - XPACK_MONITORING_ENABLED=false
+    command: logstash -f /etc/logstash/conf.d/logstash.conf
+    volumes:
+      - ./logstash/logstash.conf:/etc/logstash/conf.d/logstash.conf:ro
+      - ./mylogs/:/var/log/mylogs    
+    networks:
+      - loki-net
+    depends_on:
+      - loki      
