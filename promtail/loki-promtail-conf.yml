@@ -1,20 +1,58 @@
 server:
-
   http_listen_port: 9080
   grpc_listen_port: 0
 
 positions:
-  filename: /tmp/positions.yaml
+  filename: /promtail/positions.yaml
 
 client:
   url: http://loki:3100/api/prom/push
 
 scrape_configs:
 
-  - job_name: mylogs
+  - job_name: mcflogs
     static_configs:
     - targets:
         - localhost
       labels:
-        job: mylogs
+        job: customer
         __path__: /var/log/mylogs/*log
+
+    pipeline_stages:
+    # This stage is only going to run if the scraped target has a label of
+    # "name" with a value of "nginx" and if the log line contains the word "GET"
+    - match:
+        selector: '{job="customer"}'
+        stages:
+        # This regex stage extracts a new output by matching against some
+        # values and capturing the rest.
+        - regex:
+            expression: "(?P<datestamp>\\d{4}-[01]\\d-[0-3]\\d [0-2]\\d:[0-5]\\d:[0-5]\\d) (?P<site>\\S+?) (?P<method>\\S+?) (?P<uristem>\\S+?) (?P<uriquery>\\S+?) (?P<port>\\S+?) (?P<username>\\S+?) (?P<clienthost>\\S+?) (?P<useragent>\\S+?) (?P<referer>\\S+?) (?P<status>\\S+?) (?P<substatus>\\S+?) (?P<win32status>\\S+?) (?P<timetaken>\\S+)"
+
+        # Name from extracted data to use for the timestamp.
+        - timestamp:
+            source: datestamp
+            format: "2006-01-02 15:04:05"
+
+        # The labels stage is an action stage that takes data from the extracted 
+        # map and modifies the label set that is sent to Loki with the log entry
+        - labels:
+            datestamp:
+            #site:
+            method:
+            #uriquery:
+            port:
+            #username:
+            #clienthost:
+            #useragent:
+            #referer:
+            status:
+            #substatus:
+            #win32status:
+            elapsed: timetaken
+
+            
+        # The output stage changes the content of the captured log line by
+        # setting it to the value of output from the regex stage.
+        - output:
+            source: uristem

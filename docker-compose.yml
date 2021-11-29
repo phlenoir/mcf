@@ -6,10 +6,12 @@ networks:
 volumes:
   grafana_data: {}
   loki_data: {}
+  logstash_data: {}
+  promtail_data: {}
 
 services:
   loki:
-    user: $UIG:$GID
+    user: ${UID}:${GID}
     image: grafana/loki:latest
     container_name: "LOKI-DOCKER"
     ports:
@@ -21,19 +23,20 @@ services:
     networks:
       - mcf-net
 
-  # promtail:
-  #   image: grafana/promtail:2.2.1
-  #   container_name: "PROMTAIL-DOCKER"
-  #   volumes:
-  #     - /var/log:/var/log
-  #     - ./mylogs/:/var/log/mylogs
-  #     - ./promtail:/etc/promtail 
-  #   command: -config.file=/etc/promtail/loki-promtail-conf.yml
-  #   networks:
-  #     - mcf-net
+  promtail:
+    user: ${UID}:${GID}
+    image: grafana/promtail
+    container_name: "PROMTAIL-DOCKER"
+    volumes:
+      - /var/log:/var/log
+      - ./mylogs/:/var/log/mylogs
+      - ./promtail:/etc/promtail 
+      - ./promtail_data:/promtail
+    command: -config.file=/etc/promtail/loki-promtail-conf.yml
+    networks:
+      - mcf-net
 
   grafana:
-    user: $UIG:$GID
     image: grafana/grafana:latest
     container_name: "GRAFANA-DOCKER"
     environment:
@@ -51,18 +54,18 @@ services:
     networks:
       - mcf-net
 
-  logstash:
-    user: $UIG:$GID
-    image: grafana/logstash-output-loki
-    container_name: "LOGSTASH-DOCKER"
-    environment:
-      - XPACK_MONITORING_ENABLED=false
-    command: logstash -f /etc/logstash/conf.d/logstash.conf
-    volumes:
-      - ./logstash/logstash.conf:/etc/logstash/conf.d/logstash.conf:ro
-      - ./mylogs/:/var/log/mylogs
-      - ./logstash_data:/logstash    
-    networks:
-      - mcf-net
-    depends_on:
-      - loki      
+  # logstash:
+  #   user: ${UID}:${GID}
+  #   image: grafana/logstash-output-loki
+  #   container_name: "LOGSTASH-DOCKER"
+  #   environment:
+  #     - XPACK_MONITORING_ENABLED=false
+  #   command: logstash -f /etc/logstash/conf.d/logstash.conf
+  #   volumes:
+  #     - ./logstash/logstash.conf:/etc/logstash/conf.d/logstash.conf:ro
+  #     - ./mylogs/:/var/log/mylogs
+  #     - ./logstash_data:/logstash    
+  #   networks:
+  #     - mcf-net
+  #   depends_on:
+  #     - loki      
