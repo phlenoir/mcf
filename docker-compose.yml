@@ -1,7 +1,7 @@
 version: "3"
 
 networks:
-  loki-net:
+  mcf-net:
 
 volumes:
   grafana_data: {}
@@ -19,7 +19,7 @@ services:
       - ./loki:/etc/loki
       - ./loki_data:/loki
     networks:
-      - loki-net
+      - mcf-net
 
   # promtail:
   #   image: grafana/promtail:2.2.1
@@ -30,7 +30,7 @@ services:
   #     - ./promtail:/etc/promtail 
   #   command: -config.file=/etc/promtail/loki-promtail-conf.yml
   #   networks:
-  #     - loki-net
+  #     - mcf-net
 
   grafana:
     user: $UIG:$GID
@@ -49,7 +49,7 @@ services:
     ports:
       - "3000:3000"
     networks:
-      - loki-net
+      - mcf-net
 
   logstash:
     user: $UIG:$GID
@@ -63,6 +63,6 @@ services:
       - ./mylogs/:/var/log/mylogs
       - ./logstash_data:/logstash    
     networks:
-      - loki-net
+      - mcf-net
     depends_on:
       - loki      
