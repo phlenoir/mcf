@@ -1,7 +1,7 @@
 version: "3"
 
 networks:
-  mcf-net:
+  skynet:
 
 volumes:
   grafana_data: {}
@@ -21,7 +21,7 @@ services:
       - ./loki:/etc/loki
       - ./loki_data:/loki
     networks:
-      - mcf-net
+      - skynet
 
   promtail:
     user: ${UID}:${GID}
@@ -34,7 +34,7 @@ services:
       - ./promtail_data:/promtail
     command: -config.file=/etc/promtail/loki-promtail-conf.yml
     networks:
-      - mcf-net
+      - skynet
     depends_on:
       - loki 
   grafana:
@@ -53,7 +53,7 @@ services:
     ports:
       - "3000:3000"
     networks:
-      - mcf-net
+      - skynet
 
   # logstash:
   #   user: ${UID}:${GID}
@@ -67,6 +67,6 @@ services:
   #     - ./mylogs/:/var/log/mylogs
   #     - ./logstash_data:/logstash    
   #   networks:
-  #     - mcf-net
+  #     - skynet
   #   depends_on:
   #     - loki      
